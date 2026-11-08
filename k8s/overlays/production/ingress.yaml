@@ -1,15 +1,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-
 metadata:
   name: shoe
-
 spec:
   ingressClassName: traefik
-
   rules:
-    - host: staging.shoe.test
-
+    - host: shoe.test
       http:
         paths:
           - path: /api
@@ -19,7 +15,6 @@ spec:
                 name: api
                 port:
                   number: 3000
-
           - path: /health
             pathType: Prefix
             backend:
@@ -27,7 +22,6 @@ spec:
                 name: api
                 port:
                   number: 3000
-
           - path: /
             pathType: Prefix
             backend:

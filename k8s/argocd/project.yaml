@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: shoe-staging
+  namespace: argocd
+spec:
+  sourceRepos:
+    - https://github.com/ankhang24112411-sudo/manifest-repo.git
+  destinations:
+    - namespace: staging
+      server: https://kubernetes.default.svc
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: shoe-production
+  namespace: argocd
+spec:
+  sourceRepos:
+    - https://github.com/ankhang24112411-sudo/manifest-repo.git
+  destinations:
+    - namespace: production
+      server: https://kubernetes.default.svc

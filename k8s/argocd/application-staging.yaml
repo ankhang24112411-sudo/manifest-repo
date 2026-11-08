@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shoe-staging
+  namespace: argocd
+spec:
+  project: shoe-staging
+  source:
+    repoURL: https://github.com/ankhang24112411-sudo/manifest-repo.git
+    targetRevision: main
+    path: k8s/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shoe-production
+  namespace: argocd
+spec:
+  project: shoe-production
+  source:
+    repoURL: https://github.com/ankhang24112411-sudo/manifest-repo.git
+    targetRevision: main
+    path: k8s/overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
