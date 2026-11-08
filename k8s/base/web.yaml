@@ -17,6 +17,7 @@ spec:
       containers:
         - name: web
           image: ghcr.io/buinam2k4/teamwork_2-web:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
           readinessProbe:

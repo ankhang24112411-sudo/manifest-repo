@@ -17,6 +17,7 @@ spec:
       containers:
         - name: api
           image: ghcr.io/buinam2k4/teamwork_2:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
           envFrom:
