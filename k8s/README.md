@@ -18,15 +18,17 @@ CI của repo app tự build và push 2 image lên GHCR khi push vào `main` (`.
 - `ghcr.io/buinam2k4/teamwork_2:latest` — API (`Dockerfile`)
 - `ghcr.io/buinam2k4/teamwork_2-web:latest` — Web tĩnh (`Dockerfile.web`)
 
-Build tay nếu cần:
+Build tay nếu cần (tag phải khớp `newTag` trong overlay, mặc định `v1`):
 
 ```bash
 echo "$GHCR_TOKEN" | docker login ghcr.io -u buinam2k4 --password-stdin
-docker build -t ghcr.io/buinam2k4/teamwork_2:latest .
-docker build -f Dockerfile.web -t ghcr.io/buinam2k4/teamwork_2-web:latest .
-docker push ghcr.io/buinam2k4/teamwork_2:latest
-docker push ghcr.io/buinam2k4/teamwork_2-web:latest
+docker build -t ghcr.io/buinam2k4/teamwork_2:v1 .
+docker build -f Dockerfile.web -t ghcr.io/buinam2k4/teamwork_2-web:v1 .
+docker push ghcr.io/buinam2k4/teamwork_2:v1
+docker push ghcr.io/buinam2k4/teamwork_2-web:v1
 ```
+
+Hoặc tạo Git tag để CI build đúng tag phiên bản: `git tag v1 && git push origin v1` → sinh image `:v1`.
 
 Package GHCR mặc định private. Chọn 1 trong 2:
 - để package **Public** (Settings → Packages), hoặc
@@ -56,7 +58,14 @@ done
 `SESSION_SECRET` là bắt buộc khi `NODE_ENV=production` (app sẽ từ chối khởi động nếu thiếu).
 Có thể thay bằng SealedSecret/External Secret nếu repo công khai.
 
-## 3. Bootstrap namespace + ArgoCD
+## 3. Phiên bản image theo môi trường (GitOps v1 → v2, rollback)
+
+- `base/` chỉ khai báo tên image; tag được ghim ở từng overlay qua `images[].newTag`.
+- Nâng cấp: sửa `newTag: v1` → `v2` trong `overlays/staging/kustomization.yaml`, commit/PR, để ArgoCD sync; promote sang production bằng PR riêng sau khi nghiệm thu.
+- Rollback: sửa `newTag` về tag cũ (hoặc `git revert` commit promote) rồi sync — không dùng `kubectl set image`.
+- Image phải tồn tại với đúng tag (build/push `:v1`, `:v2`).
+
+## 4. Bootstrap namespace + ArgoCD
 
 ```bash
 kubectl apply -f k8s/bootstrap/namespaces.yaml
@@ -72,27 +81,27 @@ kubectl apply -k k8s/overlays/staging
 kubectl apply -k k8s/overlays/production
 ```
 
-## 4. Ingress Controller & publish
+## 5. Ingress Controller & publish
 
 - Cluster dùng **Traefik** (mặc định của k3s). Ingress khai báo `ingressClassName: traefik`.
 - Traefik chạy dạng Service `LoadBalancer` (k3s có ServiceLB) → truy cập qua IP node, hoặc thêm `hosts`:
   - `staging.shoe.test` và `shoe.test` → IP node.
 - Kiểm tra: `kubectl -n staging get ingress`, `curl -H 'Host: staging.shoe.test' http://<node-ip>/api/products`.
 
-## 5. Tài nguyên & Pending
+## 6. Tài nguyên & Pending
 
 - `api`: requests 100m/128Mi, limits 500m/256Mi. `web`: 50m/64Mi → 200m/128Mi. `postgres`: 100m/256Mi → 1CPU/512Mi.
 - Pod Pending thường do thiếu CPU/RAM trên node: `kubectl -n staging describe pod <pod>` xem `Insufficient cpu/memory`, rồi giảm requests hoặc thêm node.
 - Pod Pending do PVC: `kubectl -n staging get pvc` phải `Bound`; nếu `Pending` kiểm tra StorageClass `local-path` tồn tại (`kubectl get storageclass`).
 - `api` giữ 1 replica vì session lưu in-memory (MemoryStore). Tăng replica cần thêm session store dùng chung (Redis/DB), nếu không người dùng sẽ bị đăng xuất ngẫu nhiên. `web` chạy 2 replica.
 
-## 6. Phân quyền tối thiểu
+## 7. Phân quyền tối thiểu
 
 - Không commit kubeconfig vào repo. ArgoCD dùng ServiceAccount trong cluster, không dùng kubeconfig admin.
 - Repo Git nên cấp chỉ quyền đọc (deploy key read-only / token read-only).
 - `AppProject` trong `k8s/argocd/project.yaml` giới hạn mỗi Application chỉ được đọc đúng repo trên và chỉ ghi vào đúng namespace của môi trường (`staging` hoặc `production`), không dùng `project: default`.
 
-## 7. Kiểm chứng
+## 8. Kiểm chứng
 
 ```bash
 kubectl -n production get pods,svc,ingress

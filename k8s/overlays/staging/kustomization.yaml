@@ -4,3 +4,8 @@ namespace: staging
 resources:
   - ../../base
   - ingress.yaml
+images:
+  - name: ghcr.io/buinam2k4/teamwork_2
+    newTag: v1
+  - name: ghcr.io/buinam2k4/teamwork_2-web
+    newTag: v1
