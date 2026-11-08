@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: shoe
 spec:
-  ingressClassName: traefik
+  ingressClassName: nginx
   rules:
     - host: shoe.test
       http:

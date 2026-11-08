@@ -83,10 +83,13 @@ kubectl apply -k k8s/overlays/production
 
 ## 5. Ingress Controller & publish
 
-- Cluster dùng **Traefik** (mặc định của k3s). Ingress khai báo `ingressClassName: traefik`.
-- Traefik chạy dạng Service `LoadBalancer` (k3s có ServiceLB) → truy cập qua IP node, hoặc thêm `hosts`:
-  - `staging.shoe.test` và `shoe.test` → IP node.
-- Kiểm tra: `kubectl -n staging get ingress`, `curl -H 'Host: staging.shoe.test' http://<node-ip>/api/products`.
+- Cluster dùng **ingress-nginx** (addon `ingress` của minikube). Ingress khai báo `ingressClassName: nginx`.
+- Host đã có nginx riêng giữ 80/443 nên ingress-nginx publish bằng **NodePort** (dải 30000–32767). Kiểm tra cổng:
+  `kubectl -n ingress-nginx get svc ingress-nginx-controller`
+- Truy cập trực tiếp qua NodePort của IP node:
+  `curl -H 'Host: staging.shoe.test' http://<node-ip>:<nodePort>/api/products`
+- Hoặc để nginx host làm reverse proxy: thêm `server` block cho `staging.shoe.test` / `shoe.test` trỏ `proxy_pass http://<node-ip>:<nodePort>` (không cần mở thêm cổng).
+- Thêm hosts ở máy client nếu muốn mở bằng tên miền: `<ip-vps> staging.shoe.test shoe.test`.
 
 ## 6. Tài nguyên & Pending
 
