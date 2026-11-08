@@ -14,6 +14,13 @@ spec:
       labels:
         app: api
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:stable
+          command:
+            - sh
+            - -c
+            - until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done
       containers:
         - name: api
           image: ghcr.io/buinam2k4/teamwork_2:latest
